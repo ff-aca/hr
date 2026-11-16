@@ -82,10 +82,17 @@ ul.plain{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px}
 /* group */
 .mapwrap{overflow-x:auto}
 svg text{font-family:var(--font-body)}
-.members{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.member{border:2px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;min-width:0;background:var(--surface)}
-.member .mb{font-family:var(--font-mark);font-size:15px;color:#fff;border-radius:10px;padding:5px 9px}
-.member span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (max-width:480px){.groups{grid-template-columns:1fr}}
+.grp{border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.grp-h{display:flex;align-items:center;gap:8px;font-family:var(--font-hand);font-size:16px}
+.grp-h b{font-family:var(--font-mark);font-weight:400;font-size:18px}
+.grp-h small{margin-left:auto;font-family:var(--font-body);font-size:12px;font-weight:700;opacity:.8}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{display:inline-flex;align-items:center;gap:5px;background:var(--surface);color:var(--fg);border-radius:999px;padding:3px 10px 3px 4px;font-size:13px;max-width:100%}
+.pill i{font-style:normal;font-family:var(--font-mark);font-size:11px;color:#fff;border-radius:999px;padding:1px 6px}
+.pill.me{outline:2px solid var(--line)}
+.pill.empty{background:transparent;color:var(--muted);padding:3px 0}
 .counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .count{border-radius:14px;padding:10px;text-align:center}
 .count b{display:block;font-family:var(--font-mark);font-weight:400;font-size:26px;font-variant-numeric:tabular-nums}
@@ -188,7 +195,7 @@ const CONFIG = {
   ENTRY: { name:"entry.308201489", team:"entry.265574119", D:"entry.1785974881", I:"entry.2081939765", S:"entry.1367366812", C:"entry.1376595390", type:"entry.495408514" },
   SHEET_CSV: "https://docs.google.com/spreadsheets/d/e/2PACX-1vR7u1fgQijkRFQMbHbxU2eFRQJ5mIM1sNOuwY-RfR8HjYtakXkZd4Z9lcLKFl1O6iBp0TfHAXBJ7YaC/pub?gid=1942822617&single=true&output=csv"
 };
-const TEAMS = ["그룹장","RBP팀","PP팀"];
+const TEAMS = ["PP팀","RBP팀","그룹장"];
 const blank=()=>Array.from({length:N},()=>({}));
 const LS_KEY="disc-result-v3";
 let state = {view:"test", step:-1, answers:blank(), result:null};
@@ -237,7 +244,7 @@ function renderTest(){
         <li>정답이나 좋은 유형은 없어요. 오래 고민하지 말고 먼저 떠오르는 쪽으로 고르세요.</li>
         <li>다 하면 내 결과가 바로 나오고, '우리 그룹' 탭에 이름과 함께 표시돼요.</li>
       </ul>
-      <div class="note">이 검사는 워크숍에서 서로를 알아가기 위해 DISC 이론을 바탕으로 자체 제작한 도구예요.<br> 공식 진단 검사가 아니니 결과는 대화의 출발점으로 가볍게 활용해 주세요.</div>
+      <div class="note">이 검사는 워크숍에서 서로를 알아가기 위해 DISC 이론을 바탕으로 자체 제작한 도구예요. 공식 진단 검사가 아니니 결과는 대화의 출발점으로 가볍게 활용해 주세요.</div>
       <div class="fields">
         <div class="field"><label for="nm">이름</label><input id="nm" maxlength="20" placeholder="예: 구연정" value="${esc(profile.name)}"></div>
         <div class="field"><label for="tm">팀</label><select id="tm"><option value="">선택</option>${TEAMS.map(t=>`<option ${profile.team===t?"selected":""}>${t}</option>`).join("")}</select></div>
@@ -372,7 +379,6 @@ async function renderGroup(){
   const quad=(k,x,y,anchor)=>`<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="22" font-weight="700" fill="var(--${k.toLowerCase()})" opacity=".55" style="font-family:var(--font-mark)">${k}</text>`;
   el.innerHTML=`
     <div class="row end"><h2>우리 그룹 성향 지도</h2><span class="row"><span class="status">${groupDocs.length}명 참여</span><button class="btn ghost" id="rl" style="font-size:14px;padding:6px 14px">새로고침</button></span></div>
-    <div class="counts">${ORDER.map(k=>`<div class="count c${k}"><b>${counts[k]}</b><small>${TYPES[k].name}</small></div>`).join("")}</div>
     <div class="mapwrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;margin:0 auto" role="img" aria-label="그룹원 DISC 성향 지도">
       <rect x="${P}" y="${P}" width="${R}" height="${R}" fill="var(--d-bg)"/>
       <rect x="${cx}" y="${P}" width="${R}" height="${R}" fill="var(--i-bg)"/>
@@ -387,7 +393,7 @@ async function renderGroup(){
       <text x="${W-P+10}" y="${cy}" text-anchor="middle" font-size="11" fill="var(--muted)" transform="rotate(90 ${W-P+10} ${cy})">사람 중심</text>
       ${dots.map(o=>`<g><circle cx="${o.px}" cy="${o.py}" r="${o.me?8:6}" fill="var(--${rank(o.d)[0].toLowerCase()})" stroke="var(--surface)" stroke-width="2"/><text x="${o.px}" y="${o.py-12}" text-anchor="middle" font-size="11" font-weight="${o.me?700:500}" fill="var(--fg)">${esc(o.name)}${o.me?" (나)":""}</text></g>`).join("")}
     </svg></div>
-    <div class="members">${groupDocs.map(d=>{const m=rank(d)[0];return `<div class="member"><span class="mb bg${m}">${esc(d.type)}</span><span>${esc(d.name)}${isMe(d)?" (나)":""}</span></div>`}).join("")}</div>
+    <div class="groups">${ORDER.map(k=>{const ms=groupDocs.filter(d=>rank(d)[0]===k);return `<div class="grp c${k}"><div class="grp-h"><b>${k}</b>${TYPES[k].name}<small>${ms.length}명</small></div><div class="pills">${ms.length?ms.map(d=>`<span class="pill${isMe(d)?" me":""}"><i class="bg${rank(d)[0]}">${esc(d.type)}</i>${esc(d.name)}${isMe(d)?" (나)":""}</span>`).join(""):`<span class="pill empty">아직 없어요</span>`}</div></div>`}).join("")}</div>
     <p class="status">새로 제출한 결과는 몇 분 뒤에 반영돼요.</p>
     <div class="note">이야기 나눠 볼 질문: 우리 그룹에 많은 유형과 적은 유형은? 서로 다른 유형끼리 일할 때 어떤 점을 챙기면 좋을까?</div>`;
 }
