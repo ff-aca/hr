@@ -376,6 +376,27 @@ async function renderGroup(){
     const jx=((ix*37)%11-5)*1.4, jy=((ix*53)%11-5)*1.4;
     return {px:cx+x*R+jx, py:cy-y*R+jy, d, name:d.name, me:isMe(d)};
   });
+  // spread dots that sit on top of each other
+  for(let it=0;it<60;it++){
+    for(let a=0;a<dots.length;a++)for(let b=a+1;b<dots.length;b++){
+      const A=dots[a],B=dots[b];let dx=B.px-A.px,dy=B.py-A.py,dd=Math.hypot(dx,dy)||0.01;
+      if(dd<22){const m=(22-dd)/2;dx/=dd;dy/=dd;A.px-=dx*m;A.py-=dy*m;B.px+=dx*m;B.py+=dy*m;}
+    }
+    dots.forEach(o=>{o.px=Math.max(P+10,Math.min(W-P-10,o.px));o.py=Math.max(P+10,Math.min(H-P-10,o.py));});
+  }
+  // place each name where it collides least with other names and dots
+  const boxes=[];
+  const ov=(a,b)=>Math.max(0,Math.min(a.x2,b.x2)-Math.max(a.x1,b.x1))*Math.max(0,Math.min(a.y2,b.y2)-Math.max(a.y1,b.y1));
+  dots.forEach(o=>boxes.push({x1:o.px-8,x2:o.px+8,y1:o.py-8,y2:o.py+8}));
+  dots.forEach(o=>{
+    const w=(o.name.length+(o.me?4:0))*11+4, h=13;
+    const cands=[[0,-12,"middle"],[0,21,"middle"],[11,4,"start"],[-11,4,"end"],[9,-9,"start"],[-9,-9,"end"],[9,17,"start"],[-9,17,"end"],[0,-26,"middle"],[0,35,"middle"]].map(([dx,dy,a])=>[o.px+dx,o.py+dy,a]);
+    const bx=([x,y,a])=>{const x1=a==="middle"?x-w/2:a==="start"?x:x-w;return {x1,x2:x1+w,y1:y-h+2,y2:y+2};};
+    let best=null,bestS=Infinity;
+    cands.forEach((c,ci)=>{const b=bx(c);let sc=boxes.reduce((t,o2)=>t+ov(b,o2),0)+ci*0.5;
+      if(b.x1<2||b.x2>W-2||b.y1<2||b.y2>H-2) sc+=1e4; if(sc<bestS){bestS=sc;best=c;}});
+    [o.lx,o.ly,o.la]=best; boxes.push(bx(best));
+  });
   const quad=(k,x,y,anchor)=>`<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="22" font-weight="700" fill="var(--${k.toLowerCase()})" opacity=".55" style="font-family:var(--font-mark)">${k}</text>`;
   el.innerHTML=`
     <div class="row end"><h2>우리 그룹 성향 지도</h2><span class="row"><span class="status">${groupDocs.length}명 참여</span><button class="btn ghost" id="rl" style="font-size:14px;padding:6px 14px">새로고침</button></span></div>
@@ -391,7 +412,7 @@ async function renderGroup(){
       <text x="${cx}" y="${H-P+22}" text-anchor="middle" font-size="11" fill="var(--muted)">신중 · 차분</text>
       <text x="${P-8}" y="${cy}" text-anchor="middle" font-size="11" fill="var(--muted)" transform="rotate(-90 ${P-8} ${cy})">일 중심</text>
       <text x="${W-P+10}" y="${cy}" text-anchor="middle" font-size="11" fill="var(--muted)" transform="rotate(90 ${W-P+10} ${cy})">사람 중심</text>
-      ${dots.map(o=>`<g><circle cx="${o.px}" cy="${o.py}" r="${o.me?8:6}" fill="var(--${rank(o.d)[0].toLowerCase()})" stroke="var(--surface)" stroke-width="2"/><text x="${o.px}" y="${o.py-12}" text-anchor="middle" font-size="11" font-weight="${o.me?700:500}" fill="var(--fg)">${esc(o.name)}${o.me?" (나)":""}</text></g>`).join("")}
+      ${dots.map(o=>`<g><circle cx="${o.px}" cy="${o.py}" r="${o.me?8:6}" fill="var(--${rank(o.d)[0].toLowerCase()})" stroke="var(--surface)" stroke-width="2"/><text x="${o.lx}" y="${o.ly}" text-anchor="${o.la}" font-size="11" font-weight="${o.me?700:500}" fill="var(--fg)">${esc(o.name)}${o.me?" (나)":""}</text></g>`).join("")}
     </svg></div>
     <div class="groups">${ORDER.map(k=>{const ms=groupDocs.filter(d=>rank(d)[0]===k);return `<div class="grp c${k}"><div class="grp-h"><b>${k}</b>${TYPES[k].name}<small>${ms.length}명</small></div><div class="pills">${ms.length?ms.map(d=>`<span class="pill${isMe(d)?" me":""}"><i class="bg${rank(d)[0]}">${esc(d.type)}</i>${esc(d.name)}${isMe(d)?" (나)":""}</span>`).join(""):`<span class="pill empty">아직 없어요</span>`}</div></div>`}).join("")}</div>
     <p class="status">새로 제출한 결과는 몇 분 뒤에 반영돼요.</p>
