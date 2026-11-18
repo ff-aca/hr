@@ -93,6 +93,14 @@ svg text{font-family:var(--font-body)}
 .pill i{font-style:normal;font-family:var(--font-mark);font-size:11px;color:#fff;border-radius:999px;padding:1px 6px}
 .pill.me{outline:2px solid var(--line)}
 .pill.empty{background:transparent;color:var(--muted);padding:3px 0}
+button.pill{border:0;font:inherit;font-size:13px;cursor:pointer}
+button.pill:hover{box-shadow:0 0 0 2px var(--accent)}
+button.pill.sel{box-shadow:0 0 0 2.5px var(--line);font-weight:700}
+.dot{cursor:pointer}
+.hint{font-family:var(--font-hand);font-size:16px;color:var(--accent);text-align:center}
+.pd{border:2.5px solid var(--line);border-radius:20px;padding:18px;display:flex;flex-direction:column;gap:14px;background:var(--surface);scroll-margin-top:16px}
+.pd .hero .badge{font-size:30px;padding:12px 14px;min-width:70px}
+.pd .x{margin-left:auto;align-self:flex-start;border:2px solid var(--line);background:var(--surface);color:var(--fg);border-radius:999px;width:32px;height:32px;cursor:pointer;font-size:16px;line-height:1}
 .counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .count{border-radius:14px;padding:10px;text-align:center}
 .count b{display:block;font-family:var(--font-mark);font-weight:400;font-size:26px;font-variant-numeric:tabular-nums}
@@ -244,7 +252,7 @@ function renderTest(){
         <li>정답이나 좋은 유형은 없어요. 오래 고민하지 말고 먼저 떠오르는 쪽으로 고르세요.</li>
         <li>다 하면 내 결과가 바로 나오고, '우리 그룹' 탭에 이름과 함께 표시돼요.</li>
       </ul>
-      <div class="note">이 검사는 워크숍에서 서로를 알아가기 위해 DISC 이론을 바탕으로 자체 제작한 도구예요. 공식 진단 검사가 아니니 결과는 대화의 출발점으로 가볍게 활용해 주세요.</div>
+      <div class="note">이 검사는 워크숍에서 서로를 알아가기 위해 DISC 이론을 바탕으로 자체 제작한 도구예요. <br>공식 진단 검사가 아니니 결과는 대화의 출발점으로 가볍게 활용해 주세요.</div>
       <div class="fields">
         <div class="field"><label for="nm">이름</label><input id="nm" maxlength="20" placeholder="예: 구연정" value="${esc(profile.name)}"></div>
         <div class="field"><label for="tm">팀</label><select id="tm"><option value="">선택</option>${TEAMS.map(t=>`<option ${profile.team===t?"selected":""}>${t}</option>`).join("")}</select></div>
@@ -366,6 +374,7 @@ async function renderGroup(){
     return;
   }
   const isMe=d=>profile.name && d.name===profile.name && d.team===profile.team;
+  const key=d=>d.name+"|"+d.team;
   const counts={D:0,I:0,S:0,C:0}; groupDocs.forEach(d=>counts[rank(d)[0]]++);
   // map: x = 사람(+) vs 일(-), y = 빠름(+) vs 신중(-)
   const W=360,H=360,P=34,cx=W/2,cy=H/2,R=(W-2*P)/2;
@@ -412,12 +421,50 @@ async function renderGroup(){
       <text x="${cx}" y="${H-P+22}" text-anchor="middle" font-size="11" fill="var(--muted)">신중 · 차분</text>
       <text x="${P-8}" y="${cy}" text-anchor="middle" font-size="11" fill="var(--muted)" transform="rotate(-90 ${P-8} ${cy})">일 중심</text>
       <text x="${W-P+10}" y="${cy}" text-anchor="middle" font-size="11" fill="var(--muted)" transform="rotate(90 ${W-P+10} ${cy})">사람 중심</text>
-      ${dots.map(o=>`<g><circle cx="${o.px}" cy="${o.py}" r="${o.me?8:6}" fill="var(--${rank(o.d)[0].toLowerCase()})" stroke="var(--surface)" stroke-width="2"/><text x="${o.lx}" y="${o.ly}" text-anchor="${o.la}" font-size="11" font-weight="${o.me?700:500}" fill="var(--fg)">${esc(o.name)}${o.me?" (나)":""}</text></g>`).join("")}
+      ${dots.map(o=>`<g class="dot" data-key="${esc(key(o.d))}" role="button" tabindex="0" aria-label="${esc(o.name)} 결과 보기"><circle cx="${o.px}" cy="${o.py}" r="${o.me?8:6}" fill="var(--${rank(o.d)[0].toLowerCase()})" stroke="var(--surface)" stroke-width="2"/><text x="${o.lx}" y="${o.ly}" text-anchor="${o.la}" font-size="11" font-weight="${o.me?700:500}" fill="var(--fg)">${esc(o.name)}${o.me?" (나)":""}</text></g>`).join("")}
     </svg></div>
-    <div class="groups">${ORDER.map(k=>{const ms=groupDocs.filter(d=>rank(d)[0]===k);return `<div class="grp c${k}"><div class="grp-h"><b>${k}</b>${TYPES[k].name}<small>${ms.length}명</small></div><div class="pills">${ms.length?ms.map(d=>`<span class="pill${isMe(d)?" me":""}"><i class="bg${rank(d)[0]}">${esc(d.type)}</i>${esc(d.name)}${isMe(d)?" (나)":""}</span>`).join(""):`<span class="pill empty">아직 없어요</span>`}</div></div>`}).join("")}</div>
+    <div class="groups">${ORDER.map(k=>{const ms=groupDocs.filter(d=>rank(d)[0]===k);return `<div class="grp c${k}"><div class="grp-h"><b>${k}</b>${TYPES[k].name}<small>${ms.length}명</small></div><div class="pills">${ms.length?ms.map(d=>`<button class="pill${isMe(d)?" me":""}${state.sel===key(d)?" sel":""}" data-key="${esc(key(d))}"><i class="bg${rank(d)[0]}">${esc(d.type)}</i>${esc(d.name)}${isMe(d)?" (나)":""}</button>`).join(""):`<span class="pill empty">아직 없어요</span>`}</div></div>`}).join("")}</div>
+    <div id="pdetail"></div>
     <p class="status">새로 제출한 결과는 몇 분 뒤에 반영돼요.</p>
     <div class="note">이야기 나눠 볼 질문: 우리 그룹에 많은 유형과 적은 유형은? 서로 다른 유형끼리 일할 때 어떤 점을 챙기면 좋을까?</div>`;
+  renderDetail(false);
 }
+
+function renderDetail(scroll){
+  const box=document.getElementById("pdetail"); if(!box) return;
+  const d=groupDocs.find(x=>x.name+"|"+x.team===state.sel);
+  document.querySelectorAll("#view-group button.pill").forEach(b=>b.classList.toggle("sel",b.dataset.key===state.sel));
+  if(!d){ box.innerHTML=`<p class="hint">지도나 이름을 누르면 그 사람의 성향을 볼 수 있어요</p>`; return; }
+  const k=rank(d), main=k[0], T=TYPES[main], sub=d.type.length>1?TYPES[d.type[1]]:null;
+  const me=profile.name && d.name===profile.name && d.team===profile.team;
+  box.innerHTML=`<div class="pd" id="pd">
+    <div class="hero">
+      <div class="badge bg${main}">${esc(d.type)}</div>
+      <div style="min-width:0;flex:1 1 200px">
+        <div class="eyebrow">${esc(d.name)}${me?" (나)":""} · ${esc(d.team)}</div>
+        <h2>${T.name}${sub?` · ${sub.name} 성향도 함께`:""}</h2>
+        <p class="muted">${T.kw}</p>
+      </div>
+      <button class="x" id="pdx" aria-label="닫기">✕</button>
+    </div>
+    <p>${T.summary}</p>
+    <div class="bars">${ORDER.map(x=>`<div class="bar"><span>${x} ${TYPES[x].name}</span><div class="track"><i class="bg${x}" style="width:${pct(d[x])}%"></i></div><b>${pct(d[x])}</b></div>`).join("")}</div>
+    <div class="grid2">
+      <div class="box"><h3>강점</h3><ul class="plain">${T.strengths.map(s=>`<li>${s}</li>`).join("")}</ul></div>
+      <div class="box"><h3>이럴 때 힘이 나요</h3><ul class="plain">${T.energy.map(s=>`<li>${s}</li>`).join("")}</ul></div>
+    </div>
+    <div class="manual"><h3>${me?"나와":esc(d.name)+"님과"} 일할 때 이렇게 해 주세요</h3><ul class="plain">${T.tips.map(s=>`<li>${s}</li>`).join("")}</ul></div>
+  </div>`;
+  document.getElementById("pdx").onclick=()=>{state.sel=null; renderDetail(false);};
+  if(scroll) document.getElementById("pd").scrollIntoView({behavior:"smooth",block:"start"});
+}
+document.getElementById("view-group").addEventListener("click",e=>{
+  const t=e.target.closest("[data-key]"); if(!t) return;
+  state.sel = state.sel===t.dataset.key ? null : t.dataset.key; renderDetail(!!state.sel);
+});
+document.getElementById("view-group").addEventListener("keydown",e=>{
+  if((e.key==="Enter"||e.key===" ") && e.target.matches(".dot")){ e.preventDefault(); e.target.click(); }
+});
 
 /* ---------- group data (published Google Sheet CSV) ---------- */
 function parseCSV(t){
