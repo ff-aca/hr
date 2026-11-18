@@ -174,6 +174,27 @@ const TYPES = {
      tips:["근거와 자료를 함께 주세요","생각할 시간을 주세요 (즉답을 요구하지 않기)","감정보다 사실 중심으로 피드백해 주세요"]}
 };
 const ORDER = ["D","I","S","C"];
+// nickname + blended description + one extra tip for each result label
+const COMBO = {
+  D:{nick:"결단력 있는 리더"}, I:{nick:"에너지 넘치는 분위기 메이커"}, S:{nick:"든든한 조력자"}, C:{nick:"정확한 전문가"},
+  DI:{nick:"추진력 있는 리더", desc:"목표를 향해 빠르게 움직이면서 사람들까지 함께 끌고 가는 사람이에요. 결단력에 설득력이 더해져서 새로운 일을 시작할 때 특히 빛나요.", tip:"큰 그림과 목표를 먼저 공유하고, 진행 상황은 짧고 경쾌하게 나눠 주세요"},
+  DS:{nick:"든든한 실행가", desc:"결과를 중요하게 여기면서도 팀을 챙기는 사람이에요. 밀어붙일 때와 기다려야 할 때를 아는 편이라 믿고 맡기기 좋아요.", tip:"목표는 분명하게 주고, 일정 변경은 미리 알려 주세요"},
+  DC:{nick:"전략적 해결사", desc:"빠르게 결정하되 근거를 놓치지 않는 사람이에요. 어려운 문제를 분석하고 해법이 나올 때까지 끝까지 밀고 가요.", tip:"데이터와 결론을 함께 가져가면 대화가 빨라져요"},
+  ID:{nick:"행동하는 아이디어 뱅크", desc:"아이디어를 내는 데서 끝내지 않고 실행으로 옮기는 사람이에요. 분위기를 띄우면서도 일이 되게 만들어요.", tip:"아이디어에 먼저 반응해 주고, 실행할 때는 우선순위를 함께 정해 주세요"},
+  IS:{nick:"따뜻한 연결자", desc:"사람을 좋아하고 관계를 오래 지키는 사람이에요. 팀 분위기를 부드럽게 만들고 사람과 사람을 이어 줘요.", tip:"함께하는 자리에서 의견을 물어봐 주고, 고마움을 자주 표현해 주세요"},
+  IC:{nick:"설득력 있는 기획자", desc:"아이디어가 풍부하면서 그걸 논리적으로 정리할 줄 아는 사람이에요. 생각을 사람들 앞에서 설명하고 설득하는 데 강해요.", tip:"아이디어는 열린 마음으로 들어 주고, 세부 검토는 함께해 주세요"},
+  SD:{nick:"묵묵한 추진자", desc:"차분하지만 맡은 일은 확실하게 끝까지 해내는 사람이에요. 안정감 속에서 결과를 만들어 내는 힘이 있어요.", tip:"기대하는 결과와 기한을 분명히 알려 주고, 혼자 떠안지 않게 살펴 주세요"},
+  SI:{nick:"다정한 서포터", desc:"함께 있으면 편안하고 팀 분위기를 지켜 주는 사람이에요. 누구와도 잘 맞춰서 협업이 매끄럽게 굴러가게 해요.", tip:"부드럽게 다가와 주고, 의견을 직접 물어봐 주세요"},
+  SC:{nick:"꼼꼼한 버팀목", desc:"꾸준함과 정확함을 함께 갖춘 사람이에요. 정해진 일을 안정적이고 빈틈없이 해내요.", tip:"변화는 이유와 함께 충분히 미리 알려 주세요"},
+  CD:{nick:"냉철한 분석가", desc:"기준이 높고 결과까지 책임지는 사람이에요. 문제를 깊이 파고들어 확실한 답을 찾아내요.", tip:"근거와 결론을 명확하게, 감정보다 사실 중심으로 이야기해 주세요"},
+  CI:{nick:"논리적인 소통가", desc:"정확하게 생각하고, 그걸 쉽게 풀어서 전달하는 사람이에요. 복잡한 내용을 정리해 공유하는 데 강해요.", tip:"자료를 함께 보면서 생각을 나눠 주세요"},
+  CS:{nick:"신중한 완성가", desc:"정확하고 차분하게 일의 완성도를 높이는 사람이에요. 리스크를 미리 발견하고 꼼꼼하게 챙겨요.", tip:"생각할 시간을 주고, 갑작스러운 요청은 가능한 줄여 주세요"}
+};
+function typeInfo(type){
+  const T=TYPES[type[0]], sub=type.length>1?TYPES[type[1]]:null, c=COMBO[type]||{};
+  return {T, sub, nick:c.nick||T.name, desc:c.desc||T.summary,
+    names: T.name+(sub?" + "+sub.name:""), tips:(c.tip?[c.tip]:[]).concat(T.tips)};
+}
 
 const Q = [
   ["새 프로젝트를 맡으면 나는", {D:"목표와 마감부터 정하고 바로 착수한다",I:"같이 할 사람들과 아이디어부터 신나게 나눈다",S:"팀원들 상황을 살피며 무리 없는 계획을 세운다",C:"자료와 사례를 충분히 찾아 기준부터 정리한다"}],
@@ -252,7 +273,7 @@ function renderTest(){
         <li>정답이나 좋은 유형은 없어요. 오래 고민하지 말고 먼저 떠오르는 쪽으로 고르세요.</li>
         <li>다 하면 내 결과가 바로 나오고, '우리 그룹' 탭에 이름과 함께 표시돼요.</li>
       </ul>
-      <div class="note">이 검사는 워크숍에서 서로를 알아가기 위해 DISC 이론을 바탕으로 자체 제작한 도구예요. <br>공식 진단 검사가 아니니 결과는 대화의 출발점으로 가볍게 활용해 주세요.</div>
+      <div class="note">이 검사는 워크숍에서 서로를 알아가기 위해 DISC 이론을 바탕으로 자체 제작한 도구예요. 공식 진단 검사가 아니니 결과는 대화의 출발점으로 가볍게 활용해 주세요.</div>
       <div class="fields">
         <div class="field"><label for="nm">이름</label><input id="nm" maxlength="20" placeholder="예: 구연정" value="${esc(profile.name)}"></div>
         <div class="field"><label for="tm">팀</label><select id="tm"><option value="">선택</option>${TEAMS.map(t=>`<option ${profile.team===t?"selected":""}>${t}</option>`).join("")}</select></div>
@@ -316,7 +337,7 @@ function renderMe(){
     el.querySelector("#go").onclick=()=>show("test");
     return;
   }
-  const k=rank(res), main=k[0], T=TYPES[main], sub=res.type.length>1?TYPES[res.type[1]]:null;
+  const k=rank(res), main=k[0], T=TYPES[main], sub=res.type.length>1?TYPES[res.type[1]]:null, TI=typeInfo(res.type);
   const savedMsg = state.saved==="ok" ? "결과가 제출됐어요. '우리 그룹'에는 몇 분 뒤에 반영돼요."
     : state.saved==="sending" ? "결과를 제출하는 중이에요…"
     : state.saved==="fail" ? "제출에 실패했어요. 인터넷 연결을 확인하고 다시 검사해 주세요."
@@ -326,11 +347,11 @@ function renderMe(){
       <div class="badge bg${main}">${res.type}</div>
       <div style="min-width:0;flex:1 1 240px">
         <div class="eyebrow">${T.en}${sub?" + "+sub.en:""}</div>
-        <h2>${T.name}${sub?` · ${sub.name} 성향도 함께`:""}</h2>
-        <p class="muted">${T.kw}</p>
+        <h2>${TI.nick}</h2>
+        <p class="muted">${TI.names} · ${T.kw}</p>
       </div>
     </div>
-    <p>${T.summary}</p>
+    <p>${TI.desc}</p>
     <div class="bars">${ORDER.map(x=>`
       <div class="bar"><span>${x} ${TYPES[x].name}</span><div class="track"><i class="bg${x}" style="width:${pct(res[x])}%"></i></div><b>${pct(res[x])}</b></div>`).join("")}
     </div>
@@ -338,7 +359,7 @@ function renderMe(){
       <div class="box"><h3>나의 강점</h3><ul class="plain">${T.strengths.map(s=>`<li>${s}</li>`).join("")}</ul></div>
       <div class="box"><h3>이럴 때 힘이 나요</h3><ul class="plain">${T.energy.map(s=>`<li>${s}</li>`).join("")}</ul></div>
       <div class="box"><h3>이런 모습이 나올 수 있어요</h3><ul class="plain">${T.watch.map(s=>`<li>${s}</li>`).join("")}</ul></div>
-      <div class="box"><h3>나와 일할 때 이렇게 해 주세요</h3><ul class="plain">${T.tips.map(s=>`<li>${s}</li>`).join("")}</ul></div>
+      <div class="box"><h3>나와 일할 때 이렇게 해 주세요</h3><ul class="plain">${TI.tips.map(s=>`<li>${s}</li>`).join("")}</ul></div>
     </div>
     <div class="manual">
       <h3>워크숍 공유용 · 나 사용 설명서</h3>
@@ -435,25 +456,25 @@ function renderDetail(scroll){
   const d=groupDocs.find(x=>x.name+"|"+x.team===state.sel);
   document.querySelectorAll("#view-group button.pill").forEach(b=>b.classList.toggle("sel",b.dataset.key===state.sel));
   if(!d){ box.innerHTML=`<p class="hint">지도나 이름을 누르면 그 사람의 성향을 볼 수 있어요</p>`; return; }
-  const k=rank(d), main=k[0], T=TYPES[main], sub=d.type.length>1?TYPES[d.type[1]]:null;
+  const k=rank(d), main=k[0], T=TYPES[main], sub=d.type.length>1?TYPES[d.type[1]]:null, TI=typeInfo(d.type in COMBO?d.type:main);
   const me=profile.name && d.name===profile.name && d.team===profile.team;
   box.innerHTML=`<div class="pd" id="pd">
     <div class="hero">
       <div class="badge bg${main}">${esc(d.type)}</div>
       <div style="min-width:0;flex:1 1 200px">
         <div class="eyebrow">${esc(d.name)}${me?" (나)":""} · ${esc(d.team)}</div>
-        <h2>${T.name}${sub?` · ${sub.name} 성향도 함께`:""}</h2>
-        <p class="muted">${T.kw}</p>
+        <h2>${TI.nick}</h2>
+        <p class="muted">${TI.names} · ${T.kw}</p>
       </div>
       <button class="x" id="pdx" aria-label="닫기">✕</button>
     </div>
-    <p>${T.summary}</p>
+    <p>${TI.desc}</p>
     <div class="bars">${ORDER.map(x=>`<div class="bar"><span>${x} ${TYPES[x].name}</span><div class="track"><i class="bg${x}" style="width:${pct(d[x])}%"></i></div><b>${pct(d[x])}</b></div>`).join("")}</div>
     <div class="grid2">
       <div class="box"><h3>강점</h3><ul class="plain">${T.strengths.map(s=>`<li>${s}</li>`).join("")}</ul></div>
       <div class="box"><h3>이럴 때 힘이 나요</h3><ul class="plain">${T.energy.map(s=>`<li>${s}</li>`).join("")}</ul></div>
     </div>
-    <div class="manual"><h3>${me?"나와":esc(d.name)+"님과"} 일할 때 이렇게 해 주세요</h3><ul class="plain">${T.tips.map(s=>`<li>${s}</li>`).join("")}</ul></div>
+    <div class="manual"><h3>${me?"나와":esc(d.name)+"님과"} 일할 때 이렇게 해 주세요</h3><ul class="plain">${TI.tips.map(s=>`<li>${s}</li>`).join("")}</ul></div>
   </div>`;
   document.getElementById("pdx").onclick=()=>{state.sel=null; renderDetail(false);};
   if(scroll) document.getElementById("pd").scrollIntoView({behavior:"smooth",block:"start"});
